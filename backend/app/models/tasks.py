@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field
 
 from app.core.time import utcnow
@@ -28,6 +29,10 @@ class Task(TenantScoped, table=True):
     due_at: datetime | None = None
     in_progress_at: datetime | None = None
     previous_in_progress_at: datetime | None = None
+    baseline_ref: dict[str, object] | None = Field(default=None, sa_column=Column(JSON))
+    acceptance_checklist: list[str] | None = Field(default=None, sa_column=Column(JSON))
+    run_safe_status: str | None = Field(default="unknown", index=True)
+    latest_policy_check_at: datetime | None = None
 
     created_by_user_id: UUID | None = Field(
         default=None,

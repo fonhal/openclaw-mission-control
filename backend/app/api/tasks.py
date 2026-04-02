@@ -31,6 +31,7 @@ from app.models.activity_events import ActivityEvent
 from app.models.agents import Agent
 from app.models.approval_task_links import ApprovalTaskLink
 from app.models.approvals import Approval
+from app.models.board_policies import BoardPolicy
 from app.models.boards import Board
 from app.models.tag_assignments import TagAssignment
 from app.models.task_custom_fields import (
@@ -50,6 +51,7 @@ from app.schemas.task_custom_fields import (
     TaskCustomFieldValues,
     validate_custom_field_value,
 )
+from app.schemas.board_policies import TaskRunSafeValidation
 from app.schemas.tasks import TaskCommentCreate, TaskCommentRead, TaskCreate, TaskRead, TaskUpdate
 from app.services.activity_log import record_activity
 from app.services.approval_task_links import (
@@ -62,6 +64,12 @@ from app.services.openclaw.gateway_rpc import GatewayConfig as GatewayClientConf
 from app.services.openclaw.gateway_rpc import OpenClawGatewayError
 from app.services.openclaw.provisioning_db import AgentLifecycleService
 from app.services.organizations import require_board_access
+from app.services.policy_engine import (
+    PolicyEvaluationContext,
+    evaluate_task_completion,
+    evaluate_task_readiness,
+    update_task_run_safe_fields,
+)
 from app.services.tags import (
     TagState,
     load_tag_state,
@@ -88,6 +96,7 @@ if TYPE_CHECKING:
     from app.models.users import User
 
 router = APIRouter(prefix="/boards/{board_id}/tasks", tags=["tasks"])
+RUN_SAFE_ACTIVITY_KIND = "task_run_safe_validated"
 
 ALLOWED_STATUSES = {"inbox", "in_progress", "review", "done"}
 TASK_EVENT_TYPES = {
@@ -299,6 +308,48 @@ async def _require_no_pending_approval_for_status_change_when_enabled(
         task_id=task_id,
     ):
         raise _pending_approval_blocks_status_change_error()
+
+
+async def _board_policy_map(
+    session: AsyncSession,
+    *,
+    board: Board,
+) -> dict[str, BoardPolicy]:
+    policies = await BoardPolicy.objects.filter_by(board_id=board.id).all(session)
+    return {policy.policy_key: policy for policy in policies}
+
+
+async def _validate_task_run_safe(
+    session: AsyncSession,
+    *,
+    task: Task,
+    board: Board,
+) -> TaskRunSafeValidation:
+    policies = await _board_policy_map(session, board=board)
+    readiness = evaluate_task_readiness(
+        PolicyEvaluationContext(task=task, policies=policies),
+    )
+    completion = evaluate_task_completion(
+        PolicyEvaluationContext(task=task, policies=policies),
+    )
+
+    violation_map: dict[tuple[str, str], object] = {}
+    for violation in [*readiness.violations, *completion.violations]:
+        violation_map[(violation.policy, violation.message)] = violation
+
+    recommended_actions = list(dict.fromkeys([*readiness.recommended_actions, *completion.recommended_actions]))
+    ok = readiness.ok and completion.ok
+    status_value = readiness.status if not readiness.ok else completion.status
+    result = TaskRunSafeValidation(
+        ok=ok,
+        status=status_value,
+        violations=list(violation_map.values()),
+        recommended_actions=recommended_actions,
+    )
+    update_task_run_safe_fields(task, result)
+    task.latest_policy_check_at = utcnow()
+    session.add(task)
+    return result
 
 
 def _truncate_snippet(value: str) -> str:
@@ -1619,6 +1670,10 @@ async def update_task(
     updates.pop("depends_on_task_ids", None)
     updates.pop("tag_ids", None)
     updates.pop("custom_field_values", None)
+    if "baseline_ref" in updates:
+        task.baseline_ref = updates.pop("baseline_ref")
+    if "acceptance_checklist" in updates:
+        task.acceptance_checklist = updates.pop("acceptance_checklist")
     requested_status = payload.status if "status" in payload.model_fields_set else None
     update = _TaskUpdateInput(
         task=task,
@@ -1635,8 +1690,52 @@ async def update_task(
         custom_field_values=custom_field_values or {},
         custom_field_values_set=custom_field_values_set,
     )
+    board = await Board.objects.by_id(board_id).first(session)
+    if board is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     if actor.actor_type == "agent" and actor.agent and actor.agent.is_board_lead:
         return await _apply_lead_task_update(session, update=update)
+
+    if update.status_requested and requested_status == "in_progress":
+        readiness = evaluate_task_readiness(
+            PolicyEvaluationContext(
+                task=task,
+                policies=await _board_policy_map(session, board=board),
+            ),
+        )
+        update_task_run_safe_fields(task, readiness)
+        task.latest_policy_check_at = utcnow()
+        if not readiness.ok:
+            await session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "message": "Task failed run-safe readiness validation.",
+                    "code": "task_run_safe_validation_failed",
+                    "validation": readiness.model_dump(mode="json"),
+                },
+            )
+
+    if update.status_requested and requested_status in {"review", "done"}:
+        completion = evaluate_task_completion(
+            PolicyEvaluationContext(
+                task=task,
+                policies=await _board_policy_map(session, board=board),
+            ),
+        )
+        update_task_run_safe_fields(task, completion)
+        task.latest_policy_check_at = utcnow()
+        if not completion.ok:
+            await session.commit()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "message": "Task failed completion validation.",
+                    "code": "task_completion_validation_failed",
+                    "validation": completion.model_dump(mode="json"),
+                },
+            )
 
     if actor.actor_type == "agent":
         await _apply_non_lead_agent_task_rules(session, update=update)
@@ -1728,6 +1827,36 @@ async def delete_task(
     await require_board_access(session, user=auth.user, board=board, write=True)
     await delete_task_and_related_records(session, task=task)
     return OkResponse()
+
+
+@router.post("/{task_id}/validate-run-safe", response_model=TaskRunSafeValidation)
+async def validate_task_run_safe(
+    task: Task = TASK_DEP,
+    session: AsyncSession = SESSION_DEP,
+    actor: ActorContext = ACTOR_DEP,
+) -> TaskRunSafeValidation:
+    """Validate task readiness/completion policies without changing task status."""
+    if task.board_id is None:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
+    board = await Board.objects.by_id(task.board_id).first(session)
+    if board is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if actor.actor_type == "user" and actor.user is not None:
+        await require_board_access(session, user=actor.user, board=board, write=False)
+
+    validation = await _validate_task_run_safe(session, task=task, board=board)
+    await record_activity(
+        session,
+        event_type=RUN_SAFE_ACTIVITY_KIND,
+        board_id=board.id,
+        task_id=task.id,
+        agent_id=actor.agent.id if actor.actor_type == "agent" and actor.agent else None,
+        user_id=actor.user.id if actor.actor_type == "user" and actor.user else None,
+        message=json.dumps(validation.model_dump(mode="json")),
+        commit=False,
+    )
+    await session.commit()
+    return validation
 
 
 @router.get(

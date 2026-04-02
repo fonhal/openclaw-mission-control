@@ -15,6 +15,14 @@ This folder is the documentation home for **OpenClaw Mission Control**.
 - [Gateway WebSocket protocol](./openclaw_gateway_ws.md)
 - [OpenClaw baseline configuration](./openclaw_baseline_config.md)
 
+## Product direction and architecture
+
+- [Architecture index](./architecture/README.md)
+- [Mission Control Expansion Roadmap](./architecture/mission-control-expansion-roadmap.md)
+- [Phase 1 Delivery Governance Blueprint](./architecture/phase-1-delivery-governance-blueprint.md)
+
+These documents define the current expansion direction for evolving Mission Control from a control-plane dashboard into an AI-native delivery operating system with planning, governance, and run-safe execution controls.
+
 ## Reference
 
 - [Configuration reference](./reference/configuration.md)

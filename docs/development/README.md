@@ -42,6 +42,24 @@ npm run dev
 
 Open http://localhost:3000.
 
+## Current product development focus
+
+The current expansion focus is to evolve Mission Control from an operations/control-plane dashboard into an AI-native delivery system with stronger planning and governance.
+
+Recommended reading order for contributors working on this initiative:
+
+1. [Mission Control Expansion Roadmap](../architecture/mission-control-expansion-roadmap.md)
+2. [Phase 1 Delivery Governance Blueprint](../architecture/phase-1-delivery-governance-blueprint.md)
+3. [Architecture index](../architecture/README.md)
+
+These docs describe:
+
+- product positioning
+- roadmap phases
+- Phase 1 implementation scope
+- required backend/frontend changes
+- suggested DEV task split
+
 ## Useful repo-root commands
 
 ```bash
@@ -57,3 +75,4 @@ make check
 
 - [Testing](../testing/README.md)
 - [Release checklist](../release/README.md)
+- [Docs home](../README.md)

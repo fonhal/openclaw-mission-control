@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, Self
+from typing import Any, Literal, Self
 from uuid import UUID
 
 from pydantic import field_validator, model_validator
@@ -31,6 +31,8 @@ class TaskBase(SQLModel):
     assigned_agent_id: UUID | None = None
     depends_on_task_ids: list[UUID] = Field(default_factory=list)
     tag_ids: list[UUID] = Field(default_factory=list)
+    baseline_ref: dict[str, Any] | None = None
+    acceptance_checklist: list[str] = Field(default_factory=list)
 
 
 class TaskCreate(TaskBase):
@@ -51,6 +53,8 @@ class TaskUpdate(SQLModel):
     assigned_agent_id: UUID | None = None
     depends_on_task_ids: list[UUID] | None = None
     tag_ids: list[UUID] | None = None
+    baseline_ref: dict[str, Any] | None = None
+    acceptance_checklist: list[str] | None = None
     custom_field_values: TaskCustomFieldValues | None = None
     comment: NonEmptyStr | None = None
 
@@ -81,6 +85,8 @@ class TaskRead(TaskBase):
     in_progress_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    run_safe_status: str | None = None
+    latest_policy_check_at: datetime | None = None
     blocked_by_task_ids: list[UUID] = Field(default_factory=list)
     is_blocked: bool = False
     tags: list[TagRef] = Field(default_factory=list)
