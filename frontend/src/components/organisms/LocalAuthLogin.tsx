@@ -11,6 +11,14 @@ import { getApiBaseUrl } from "@/lib/api-base";
 
 const LOCAL_AUTH_TOKEN_MIN_LENGTH = 50;
 
+function normalizeLocalToken(rawToken: string): string {
+  const cleaned = rawToken.trim();
+  if (/^Bearer\s+/i.test(cleaned)) {
+    return cleaned.replace(/^Bearer\s+/i, "").trim();
+  }
+  return cleaned;
+}
+
 async function validateLocalToken(token: string): Promise<string | null> {
   let baseUrl: string;
   try {
@@ -24,7 +32,7 @@ async function validateLocalToken(token: string): Promise<string | null> {
     response = await fetch(`${baseUrl}/api/v1/users/me`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${normalizeLocalToken(token)}`,
       },
     });
   } catch {
@@ -53,14 +61,14 @@ export function LocalAuthLogin({ onAuthenticated }: LocalAuthLoginProps) {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const cleaned = token.trim();
+    const cleaned = normalizeLocalToken(token);
     if (!cleaned) {
-      setError("Bearer token is required.");
+      setError("Access token is required.");
       return;
     }
     if (cleaned.length < LOCAL_AUTH_TOKEN_MIN_LENGTH) {
       setError(
-        `Bearer token must be at least ${LOCAL_AUTH_TOKEN_MIN_LENGTH} characters.`,
+        `Access token must be at least ${LOCAL_AUTH_TOKEN_MIN_LENGTH} characters.`,
       );
       return;
     }
@@ -100,7 +108,7 @@ export function LocalAuthLogin({ onAuthenticated }: LocalAuthLoginProps) {
               Local Authentication
             </h1>
             <p className="text-sm text-muted">
-              Enter your access token to unlock Mission Control.
+              Enter your access token to unlock Mission Control. You can paste either the raw token or a full Bearer token.
             </p>
           </div>
         </CardHeader>
@@ -118,7 +126,7 @@ export function LocalAuthLogin({ onAuthenticated }: LocalAuthLoginProps) {
                 type="password"
                 value={token}
                 onChange={(event) => setToken(event.target.value)}
-                placeholder="Paste token"
+                placeholder="Paste token or Bearer token"
                 autoFocus
                 disabled={isValidating}
                 className="font-mono"

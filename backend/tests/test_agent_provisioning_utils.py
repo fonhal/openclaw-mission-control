@@ -144,6 +144,9 @@ async def test_provision_main_agent_uses_dedicated_openclaw_agent_id(monkeypatch
         captured["patched_agent_id"] = registration.agent_id
         captured["workspace_path"] = registration.workspace_path
 
+    async def _fake_patch_agent_heartbeats(self, entries):
+        captured["heartbeat_entries"] = entries
+
     async def _fake_list_agent_files(self, agent_id):
         captured["files_index_agent_id"] = agent_id
         return {}
@@ -163,6 +166,11 @@ async def test_provision_main_agent_uses_dedicated_openclaw_agent_id(monkeypatch
         agent_provisioning.OpenClawGatewayControlPlane,
         "upsert_agent",
         _fake_upsert_agent,
+    )
+    monkeypatch.setattr(
+        agent_provisioning.OpenClawGatewayControlPlane,
+        "patch_agent_heartbeats",
+        _fake_patch_agent_heartbeats,
     )
     monkeypatch.setattr(
         agent_provisioning.OpenClawGatewayControlPlane,
@@ -189,6 +197,13 @@ async def test_provision_main_agent_uses_dedicated_openclaw_agent_id(monkeypatch
     expected_agent_id = GatewayAgentIdentity.openclaw_agent_id_for_id(gateway_id)
     assert captured["patched_agent_id"] == expected_agent_id
     assert captured["files_index_agent_id"] == expected_agent_id
+    assert captured["heartbeat_entries"] == [
+        (
+            expected_agent_id,
+            "/tmp/openclaw/workspace-gateway-" + str(gateway_id),
+            {"every": "10m", "target": "last", "includeReasoning": False},
+        )
+    ]
 
 
 @pytest.mark.asyncio
@@ -613,12 +628,69 @@ async def test_control_plane_upsert_agent_missing_after_already_exists_fails_fas
     assert sleeps == []
 
 
+@pytest.mark.asyncio
+async def test_patch_agent_heartbeats_retries_on_config_patch_rate_limit(monkeypatch):
+    calls: list[tuple[str, dict[str, object] | None]] = []
+    sleeps: list[float] = []
+    patch_attempts = 0
+
+    async def _fake_sleep(seconds: float) -> None:
+        sleeps.append(seconds)
+
+    async def _fake_openclaw_call(method, params=None, config=None):
+        nonlocal patch_attempts
+        _ = config
+        calls.append((method, params))
+        if method == "config.get":
+            return {"hash": None, "config": {"agents": {"list": []}}}
+        if method == "config.patch":
+            patch_attempts += 1
+            if patch_attempts < 3:
+                raise agent_provisioning.OpenClawGatewayError(
+                    "rate limit exceeded for config.patch; retry after 57s"
+                )
+            return {"ok": True}
+        raise AssertionError(f"Unexpected method: {method}")
+
+    monkeypatch.setattr(agent_provisioning, "openclaw_call", _fake_openclaw_call)
+    monkeypatch.setattr(agent_provisioning.asyncio, "sleep", _fake_sleep)
+    cp = agent_provisioning.OpenClawGatewayControlPlane(
+        agent_provisioning.GatewayClientConfig(url="ws://gateway.example/ws", token=None),
+    )
+
+    await cp.patch_agent_heartbeats(
+        [
+            (
+                "board-agent-a",
+                "/tmp/workspace-board-agent-a",
+                {"every": "10m", "target": "last", "includeReasoning": False},
+            )
+        ]
+    )
+
+    patch_calls = [method for method, _ in calls if method == "config.patch"]
+    assert len(patch_calls) == 3
+    assert len(sleeps) == 2
+    assert all(delay >= 1.0 for delay in sleeps)
+
+
 def test_is_missing_agent_error_matches_gateway_agent_not_found() -> None:
     assert agent_provisioning._is_missing_agent_error(
         agent_provisioning.OpenClawGatewayError('agent "mc-abc" not found'),
     )
     assert not agent_provisioning._is_missing_agent_error(
         agent_provisioning.OpenClawGatewayError("dial tcp: connection refused"),
+    )
+
+
+def test_transient_gateway_markers_include_config_patch_rate_limit() -> None:
+    assert agent_provisioning._CONFIG_PATCH_BACKOFF is not None
+    from app.services.openclaw.internal.retry import _is_transient_gateway_error
+
+    assert _is_transient_gateway_error(
+        agent_provisioning.OpenClawGatewayError(
+            "rate limit exceeded for config.patch; retry after 57s"
+        )
     )
 
 

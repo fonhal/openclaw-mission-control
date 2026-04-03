@@ -38,7 +38,7 @@ describe("LocalAuthLogin", () => {
 
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
-    expect(screen.getByText("Bearer token is required.")).toBeInTheDocument();
+    expect(screen.getByText("Access token is required.")).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(setLocalAuthTokenMock).not.toHaveBeenCalled();
   });
@@ -51,7 +51,7 @@ describe("LocalAuthLogin", () => {
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(
-      screen.getByText("Bearer token must be at least 50 characters."),
+      screen.getByText("Access token must be at least 50 characters."),
     ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(setLocalAuthTokenMock).not.toHaveBeenCalled();
@@ -87,12 +87,41 @@ describe("LocalAuthLogin", () => {
     render(<LocalAuthLogin onAuthenticated={onAuthenticatedMock} />);
 
     const token = `  ${"g".repeat(50)} `;
-    await user.type(screen.getByPlaceholderText("Paste token"), token);
+    await user.type(
+      screen.getByPlaceholderText("Paste token or Bearer token"),
+      token,
+    );
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() =>
       expect(setLocalAuthTokenMock).toHaveBeenCalledWith("g".repeat(50)),
     );
+    expect(onAuthenticatedMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts a pasted Bearer token and stores the raw token", async () => {
+    const onAuthenticatedMock = vi.fn();
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 200 }));
+    const user = userEvent.setup();
+    render(<LocalAuthLogin onAuthenticated={onAuthenticatedMock} />);
+
+    const rawToken = "h".repeat(50);
+    await user.type(
+      screen.getByPlaceholderText("Paste token or Bearer token"),
+      `  Bearer ${rawToken} `,
+    );
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "http://localhost:8000/api/v1/users/me",
+        expect.objectContaining({
+          method: "GET",
+          headers: { Authorization: `Bearer ${rawToken}` },
+        }),
+      ),
+    );
+    expect(setLocalAuthTokenMock).toHaveBeenCalledWith(rawToken);
     expect(onAuthenticatedMock).toHaveBeenCalledTimes(1);
   });
 

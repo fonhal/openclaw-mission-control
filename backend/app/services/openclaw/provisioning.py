@@ -47,6 +47,7 @@ from app.services.openclaw.gateway_rpc import (
 )
 from app.services.openclaw.internal.agent_key import agent_key as _agent_key
 from app.services.openclaw.internal.agent_key import slugify
+from app.services.openclaw.internal.retry import GatewayBackoff
 from app.services.openclaw.internal.session_keys import (
     board_agent_session_key,
     board_lead_session_key,
@@ -57,6 +58,14 @@ if TYPE_CHECKING:
     from app.models.users import User
 
 logger = get_logger(__name__)
+
+_CONFIG_PATCH_BACKOFF = GatewayBackoff(
+    timeout_s=75.0,
+    base_delay_s=2.0,
+    max_delay_s=15.0,
+    jitter=0.1,
+    timeout_context="gateway config.patch",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -552,8 +561,9 @@ class GatewayControlPlane(ABC):
 class OpenClawGatewayControlPlane(GatewayControlPlane):
     """OpenClaw gateway RPC implementation of the lifecycle control-plane contract."""
 
-    def __init__(self, config: GatewayClientConfig) -> None:
+    def __init__(self, config: GatewayClientConfig, *, patch_heartbeats_on_upsert: bool = True) -> None:
         self._config = config
+        self._patch_heartbeats_on_upsert = patch_heartbeats_on_upsert
 
     async def health(self) -> object:
         return await openclaw_call("health", config=self._config)
@@ -628,9 +638,10 @@ class OpenClawGatewayControlPlane(GatewayControlPlane):
                     _update_delay = min(_update_delay * 2, 4.0)
                     continue
                 raise
-        await self.patch_agent_heartbeats(
-            [(registration.agent_id, registration.workspace_path, registration.heartbeat)],
-        )
+        if self._patch_heartbeats_on_upsert:
+            await self.patch_agent_heartbeats(
+                [(registration.agent_id, registration.workspace_path, registration.heartbeat)],
+            )
 
     async def delete_agent(self, agent_id: str, *, delete_files: bool = True) -> None:
         await openclaw_call(
@@ -707,7 +718,9 @@ class OpenClawGatewayControlPlane(GatewayControlPlane):
         params = {"raw": json.dumps(patch)}
         if base_hash:
             params["baseHash"] = base_hash
-        await openclaw_call("config.patch", params, config=self._config)
+        await _CONFIG_PATCH_BACKOFF.run(
+            lambda: openclaw_call("config.patch", params, config=self._config)
+        )
 
 
 async def _gateway_config_agent_list(
@@ -1056,7 +1069,11 @@ class GatewayMainAgentLifecycleManager(BaseAgentLifecycleManager):
         return preserved
 
 
-def _control_plane_for_gateway(gateway: Gateway) -> OpenClawGatewayControlPlane:
+def _control_plane_for_gateway(
+    gateway: Gateway,
+    *,
+    patch_heartbeats_on_upsert: bool = True,
+) -> OpenClawGatewayControlPlane:
     if not gateway.url:
         msg = "Gateway url is required"
         raise OpenClawGatewayError(msg)
@@ -1067,6 +1084,7 @@ def _control_plane_for_gateway(gateway: Gateway) -> OpenClawGatewayControlPlane:
             allow_insecure_tls=gateway.allow_insecure_tls,
             disable_device_pairing=gateway.disable_device_pairing,
         ),
+        patch_heartbeats_on_upsert=patch_heartbeats_on_upsert,
     )
 
 
@@ -1169,7 +1187,7 @@ class OpenClawGatewayProvisioner:
             session_key = _session_key(agent)
             manager_type = BoardAgentLifecycleManager
 
-        control_plane = _control_plane_for_gateway(gateway)
+        control_plane = _control_plane_for_gateway(gateway, patch_heartbeats_on_upsert=False)
         manager = manager_type(gateway, control_plane)
         await manager.provision(
             agent=agent,
@@ -1183,6 +1201,9 @@ class OpenClawGatewayProvisioner:
                 overwrite=overwrite,
             ),
             session_label=agent.name or "Gateway Agent",
+        )
+        await control_plane.patch_agent_heartbeats(
+            [(manager._agent_id(agent), _workspace_path(agent, gateway.workspace_root), _heartbeat_config(agent))]
         )
 
         if reset_session:
