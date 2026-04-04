@@ -234,6 +234,30 @@ After the user triggers an action, they should be able to understand:
 - whether state changed
 - whether more waiting or refreshing is needed
 
+## Current concrete example from the UI
+
+### Action: delete agent
+
+The current agents page already exposes a destructive delete flow backed by a confirmation dialog.
+
+**Current route context**
+
+- `/agents`
+
+**Observed UI behavior**
+
+- the page exposes row-level actions through the agents table
+- delete opens a `ConfirmActionDialog`
+- the dialog copy explicitly says the action cannot be undone
+- the confirm button enters a pending state while deletion is in progress
+- backend errors can be rendered inside the dialog
+
+**Contract implications**
+
+- this is a destructive action and should remain confirmation-gated
+- the UI should distinguish between open-state, confirming-state, and failed-state
+- optimistic list updates should not hide backend failure conditions
+
 ## Follow-up
 
 As Mission Control grows, this document should stay aligned with:

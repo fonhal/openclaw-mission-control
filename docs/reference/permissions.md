@@ -47,12 +47,27 @@ Mission Control should be able to reason separately about:
 
 ## Example permission-sensitive cases
 
-Examples that often need explicit design:
+Examples already visible in the current UI include:
 
-- viewing session summaries vs full session detail
-- viewing task state vs retrying or cancelling a task
-- viewing notification status vs re-triggering a notification workflow
-- viewing node health vs triggering node-affecting actions
+- agents page access is restricted to organization owners and admins
+- gateways page access is restricted to admins
+- custom fields access is restricted to admins
+- skill marketplace and packs navigation is shown only for admins
+- deleting an agent is a destructive action guarded by an explicit confirmation dialog
+
+## Current observable permission patterns
+
+From the current frontend structure, Mission Control already distinguishes between at least:
+
+- signed-in vs signed-out users
+- admin-only navigation and page access
+- action-level confirmation for destructive operations
+
+This means permissions are not only a backend concern; they are already shaping:
+
+- sidebar visibility
+- page accessibility
+- destructive action flow
 
 ## UI expectations
 
@@ -63,11 +78,11 @@ When permission affects a page or action, the UI should help the user understand
 - environment unavailability
 - another gating condition
 
-## Future expansion
+## Follow-up
 
-As roles and auth modes stabilize, this document should add:
+This file should next be extended with a concrete mapping of:
 
-- concrete roles or access categories
-- page-level permission mapping
-- action-level permission mapping
-- guidance for disabled vs hidden actions
+- admin-only routes
+- signed-in-only routes
+- destructive actions that require confirmation
+- actions that are hidden vs disabled

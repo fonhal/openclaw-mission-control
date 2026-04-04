@@ -28,7 +28,7 @@ Each page area should answer:
 - what the user is trying to do there
 - whether it is overview, detail, or support
 
-## Proposed page areas
+## Current page areas based on the frontend app
 
 ### Dashboard
 
@@ -36,73 +36,101 @@ Type:
 - overview
 
 Primary purpose:
-- show global operational health and important entry points
+- show operational summary, system signals, and major drill-down links
 
 Primary objects:
-- summary views of sessions, tasks/runs, notifications, nodes
+- dashboard metrics
+- boards
+- agents
+- activity events
+- gateway status snapshots
 
-### Sessions
+### Live feed
 
 Type:
-- list and detail
+- overview / streaming activity page
 
 Primary purpose:
-- inspect session state and drill into session context
+- show recent and live activity across boards, tasks, approvals, chats, and agents
 
 Primary objects:
-- session
+- activity events
+- task comments
+- board chat and command events
+- approval events
+- agent presence
 
-### Tasks / Runs / Jobs
+### Boards area
 
 Type:
-- list and detail
+- list and detail cluster
 
 Primary purpose:
-- inspect execution lifecycle and intervene when appropriate
+- manage board groups, boards, tags, approvals, and custom fields
 
 Primary objects:
+- board group
+- board
 - task
-- run
-- job
+- approval
+- tag
+- custom field
 
-### Notifications
-n
-Type:
-- list and detail
-
-Primary purpose:
-- inspect delivery outcomes and related failures
-
-Primary objects:
-- notification
-
-### Nodes / Devices
+### Board detail
 
 Type:
-- list and detail
+- high-interaction detail page
 
 Primary purpose:
-- inspect connected environments and readiness
+- central work surface for a board, combining task board, board chat, approvals, activity context, and task field editing
 
 Primary objects:
-- node
+- board
+- task
+- task comment
+- approval
+- board memory
 
-### Operations
+### Skills area
 
 Type:
-- support / controlled actions
+- list / management area
 
 Primary purpose:
-- host diagnostic and operational workflows that do not belong in the main object pages
+- expose marketplace and pack-level skill workflows
 
 Primary objects:
-- workflow-dependent
+- marketplace skill
+- skill pack
+
+### Administration area
+
+Type:
+- list and detail cluster
+
+Primary purpose:
+- manage organization settings, gateways, and agents
+
+Primary objects:
+- organization membership
+- gateway
+- agent
+
+## Page ownership takeaway
+
+The current product is more board-centric and administration-centric than the earlier abstract model suggested.
+It is not primarily organized around sessions, notifications, and nodes at the top level of navigation.
+Those concepts may still matter architecturally, but the current visible page system centers more on:
+
+- boards and approvals
+- agents and gateways
+- live activity
+- organization administration
 
 ## Future expansion
 
-As routes stabilize, this file should be extended with:
+This file should next add:
 
-- final route names
-- page ownership
-- related contract references
-- primary actions per page
+- page-level action summaries
+- per-page section breakdowns
+- page-to-contract references for high-risk actions

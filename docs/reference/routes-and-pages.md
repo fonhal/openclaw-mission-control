@@ -26,89 +26,151 @@ Each page entry should eventually define:
 - likely actions
 - related docs
 
-## Initial page map
+## Current route and page map
 
-### Dashboard
+The current frontend app exposes these route groups under `frontend/src/app/`.
 
+### Overview
+
+#### Dashboard
 Expected route:
-- to be confirmed
+- `/dashboard`
 
 Primary purpose:
 - provide a high-level operational overview
+- surface metrics, boards, agents, activity, and gateway status snapshots
 
 Primary objects:
-- summary state across sessions, tasks/runs, notifications, and nodes
+- dashboard metrics
+- boards
+- agents
+- activity events
+- gateway snapshots
 
-### Sessions
-
+#### Live feed
 Expected route:
-- to be confirmed
+- `/activity`
 
 Primary purpose:
-- inspect session lists and open session details
+- provide a real-time activity surface for task, board, agent, and approval events
 
 Primary objects:
-- session
+- activity events
+- task comments
+- board chat and command events
+- approval events
+- agent presence events
 
-### Session detail
+### Boards
 
-Expected route:
-- to be confirmed
+#### Board groups
+Expected routes:
+- `/board-groups`
+- `/board-groups/new`
+- `/board-groups/[groupId]`
 
 Primary purpose:
-- inspect a single session’s current state and related context
+- manage and inspect board-group level organization
 
-Primary objects:
-- session
-
-### Tasks / Runs / Jobs
-
-Expected route:
-- to be confirmed
+#### Boards
+Expected routes:
+- `/boards`
+- `/boards/new`
+- `/boards/[boardId]`
 
 Primary purpose:
-- inspect execution-oriented objects and identify intervention points
+- inspect a board and work directly with tasks, approvals, board chat, activity, and custom fields
 
 Primary objects:
+- board
 - task
-- run
-- job
+- task comment
+- approval
+- board memory / chat
+- board custom fields
 
-### Notifications
-
-Expected route:
-- to be confirmed
-
-Primary purpose:
-- inspect delivery outcomes and related context
-
-Primary objects:
-- notification
-
-### Nodes / Devices
-
-Expected route:
-- to be confirmed
+#### Tags
+Expected routes:
+- `/tags`
+- `/tags/add`
 
 Primary purpose:
-- inspect connectivity and readiness of connected environments
+- inspect and manage task-tagging primitives
 
-Primary objects:
-- node
-
-### Operations
-
+#### Approvals
 Expected route:
-- to be confirmed
+- `/approvals`
 
 Primary purpose:
-- host controlled operational and diagnostic workflows that do not belong on a core object page
+- review approval-oriented workflows across boards
 
-## Future expansion
+#### Custom fields
+Expected routes:
+- `/custom-fields`
+- `/custom-fields/new`
 
-As the product becomes more concrete, this file should add:
+Primary purpose:
+- manage organization-level task custom fields
 
-- actual route paths
+### Skills
+
+#### Marketplace
+Expected route:
+- `/skills/marketplace`
+
+#### Packs
+Expected route:
+- `/skills/packs`
+
+Primary purpose:
+- browse and manage skill-related inventory and installation workflows
+
+### Administration
+
+#### Organization
+Expected route:
+- `/organization`
+
+Primary purpose:
+- inspect organization-level membership and access settings
+
+#### Gateways
+Expected routes:
+- `/gateways`
+- `/gateways/new`
+- `/gateways/[gatewayId]`
+
+Primary purpose:
+- inspect and manage gateway-connected environments
+
+#### Agents
+Expected routes:
+- `/agents`
+- `/agents/new`
+- `/agents/[agentId]`
+
+Primary purpose:
+- inspect and manage agents
+
+Primary actions already visible in the UI:
+- create a new agent
+- delete an existing agent with confirmation
+
+## Supporting routes
+
+Additional routes currently present include:
+
+- `/organization`
+- `/settings`
+- `/invite`
+- `/onboarding`
+- `/sign-in/[[...rest]]`
+- `/page.tsx` root landing route
+
+## Notes for follow-up
+
+This file should next be extended with:
+
 - page ownership notes
-- route guard or permission notes
-- main action entry points per page
+- route-level permission expectations
+- links to action contracts for routes with write operations
