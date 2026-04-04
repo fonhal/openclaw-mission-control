@@ -25,6 +25,7 @@ These docs separate product intent, architecture boundaries, reference material,
 - [Developer workflow](./guide/developer-workflow.md)
 - [Product mission](./product/mission.md)
 - [Information architecture](./product/information-architecture.md)
+- [Page map](./product/page-map.md)
 - [System overview](./architecture/system-overview.md)
 - [Runtime integration](./architecture/runtime-integration.md)
 - [Commands and actions](./reference/commands-and-actions.md)
@@ -32,6 +33,9 @@ These docs separate product intent, architecture boundaries, reference material,
 - [UI action contract](./contracts/ui-action-contract.md)
 - [Session state contract](./contracts/session-state-contract.md)
 - [Task state contract](./contracts/task-state-contract.md)
+- [Release checklist](./operations/release-checklist.md)
+- [Smoke test](./operations/smoke-test.md)
+- [UI writing style](./prompts/ui-writing-style.md)
 
 ## Product direction and architecture
 
