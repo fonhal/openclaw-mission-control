@@ -15,6 +15,18 @@ This folder is the documentation home for **OpenClaw Mission Control**.
 - [Gateway WebSocket protocol](./openclaw_gateway_ws.md)
 - [OpenClaw baseline configuration](./openclaw_baseline_config.md)
 
+## Mission Control structure docs
+
+These docs separate product intent, architecture boundaries, reference material, and action contracts so new documentation does not get mixed into older operational guides.
+
+- [Guide overview](./guide/overview.md)
+- [Product mission](./product/mission.md)
+- [Information architecture](./product/information-architecture.md)
+- [System overview](./architecture/system-overview.md)
+- [Runtime integration](./architecture/runtime-integration.md)
+- [Commands and actions](./reference/commands-and-actions.md)
+- [UI action contract](./contracts/ui-action-contract.md)
+
 ## Product direction and architecture
 
 - [Architecture index](./architecture/README.md)
