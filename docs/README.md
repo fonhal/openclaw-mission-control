@@ -34,6 +34,7 @@ These docs separate product intent, architecture boundaries, reference material,
 - [State lifecycle](./architecture/state-lifecycle.md)
 - [Dashboard runtime model](./architecture/dashboard-runtime-model.md)
 - [Activity feed runtime model](./architecture/activity-feed-runtime-model.md)
+- [Spec-first roadmap](./architecture/spec-first-roadmap.md)
 - [Commands and actions](./reference/commands-and-actions.md)
 - [Data models](./reference/data-models.md)
 - [Routes and pages](./reference/routes-and-pages.md)
@@ -51,6 +52,7 @@ These docs separate product intent, architecture boundaries, reference material,
 
 - [Architecture index](./architecture/README.md)
 - [Mission Control Expansion Roadmap](./architecture/mission-control-expansion-roadmap.md)
+- [Spec-first roadmap](./architecture/spec-first-roadmap.md)
 - [Phase 1 Delivery Governance Blueprint](./architecture/phase-1-delivery-governance-blueprint.md)
 
 These documents define the current expansion direction for evolving Mission Control from a control-plane dashboard into an AI-native delivery operating system with planning, governance, and run-safe execution controls.
