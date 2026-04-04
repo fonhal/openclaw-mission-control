@@ -20,12 +20,18 @@ This folder is the documentation home for **OpenClaw Mission Control**.
 These docs separate product intent, architecture boundaries, reference material, and action contracts so new documentation does not get mixed into older operational guides.
 
 - [Guide overview](./guide/overview.md)
+- [Quickstart](./guide/quickstart.md)
+- [Operator workflow](./guide/operator-workflow.md)
+- [Developer workflow](./guide/developer-workflow.md)
 - [Product mission](./product/mission.md)
 - [Information architecture](./product/information-architecture.md)
 - [System overview](./architecture/system-overview.md)
 - [Runtime integration](./architecture/runtime-integration.md)
 - [Commands and actions](./reference/commands-and-actions.md)
+- [Data models](./reference/data-models.md)
 - [UI action contract](./contracts/ui-action-contract.md)
+- [Session state contract](./contracts/session-state-contract.md)
+- [Task state contract](./contracts/task-state-contract.md)
 
 ## Product direction and architecture
 
