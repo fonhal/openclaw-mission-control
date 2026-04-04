@@ -54,15 +54,23 @@ The task model should support the minimum fields needed to anchor governance beh
 Included fields for phase 1:
 
 - `baseline_ref`
-  - points to the planning or scope baseline that governs the task
+  - author-owned input
+  - points to the single scope baseline artifact that governs the task
+  - must resolve to a stable baseline anchor, not a generic free-form reference
 - `acceptance_checklist`
-  - stores explicit acceptance items that can be inspected and validated
+  - author-owned input
+  - stores explicit completion checks that can be inspected and validated
+  - must be written as executable task-level acceptance, not as general notes or policy prose
 - `run_safe_status`
-  - indicates whether the system considers the task safe to execute or complete
+  - system-evaluated signal
+  - carries only the latest gating outcome / go-no-go conclusion
+  - must not absorb reasons, warnings, or remediation text
 - `latest_policy_check_at`
+  - system-evaluated signal
   - records when governance validation last ran
 
-Phase 1 scope includes defining field meaning, allowed states where relevant, read/write behavior, and response shape expectations.
+Phase 1 scope includes defining field meaning, role ownership, allowed states where relevant, read/write behavior, and response shape expectations.
+The baseline target is direct implementation consumption: schema, validator, endpoint, and verifier flows should be able to read these fields without a second translation layer.
 
 ### 3. Blocker model and evidence model
 
@@ -74,12 +82,24 @@ Included concepts:
 - evidence records attached to tasks
 - lifecycle expectations for creation, update, and resolution
 - visibility needed for validation and operator review
+- explicit role boundaries between author-owned input and system-evaluated signal
 
 The model should make it possible to distinguish:
 
 - work that is not started because it is blocked
 - work that progressed but lacks evidence
 - work that is complete enough to review or close
+
+For phase 1 terminology, these anchors should be read as follows:
+
+- `blocker`
+  - author-owned input when a task owner records an open blocker set
+  - system-evaluated signal only when validation derives a gating consequence from unresolved blockers
+- `evidence`
+  - author-owned input when a task owner submits proof artifacts or structured delivery records
+  - not a synonym for general context or commentary
+
+The contract goal is to remove ambiguity about reference object, timing, and consumption path so endpoint, UI, docs, and verifier layers can consume the same anchor semantics.
 
 ### 4. Board policy design and validation rules
 
@@ -97,6 +117,16 @@ Included validation outcomes:
 - structured violations
 - clear mapping from missing task data to operator-visible validation results
 - enough rule definition to support backend implementation without re-deciding product intent
+- direct mapping from baseline terminology to contract fields without intermediate aliases
+
+Validation outputs in this phase should follow a strict split:
+
+- conclusion layer
+  - `run_safe_status` only expresses the latest gating outcome
+- explanation layer
+  - criteria, violations, warnings, recommended action, and trigger/hit reason live in structured result objects
+
+This split is in scope because downstream guard, endpoint, dashboard, settings, and verifier work all depend on the same machine-readable boundary.
 
 ### 5. Validation-safe backend support
 
@@ -197,9 +227,11 @@ Phase 1 is successful when all of the following are true.
 
 ### Contract clarity
 
-- Task governance fields have clear meaning and boundaries.
+- Task governance fields have clear meaning, role ownership, and boundaries.
+- Baseline terminology can map directly to contract fields without alias translation.
 - Blocker and evidence concepts have clear lifecycle expectations.
 - Validation rules distinguish hard blocks from warnings.
+- Conclusion-layer fields and explanation-layer structures are not mixed.
 
 ### Implementation readiness
 
@@ -210,6 +242,7 @@ Phase 1 is successful when all of the following are true.
 
 - The system can identify when key governance prerequisites are missing.
 - Missing baseline, acceptance, or evidence can be surfaced as structured validation results.
+- Transition and verifier consumers can read the same action/gating outputs without inventing local translations.
 
 ### Reviewability
 
@@ -334,6 +367,32 @@ Must include:
 Done when:
 
 - callers receive machine-usable validation results aligned with the policy matrix
+
+## Contract alignment rules for downstream work
+
+The phase 1 baseline is only valid if downstream design and implementation can consume it without reinterpretation.
+
+### Baseline-to-contract mapping rule
+
+Every baseline anchor used by downstream tasks should map directly to a contract field, rule input, trigger, evaluation target, or structured result field.
+If a concept still requires "this is roughly the same as..." explanation, it is not yet stable enough for phase 1 handoff.
+
+### Anchor constraint rules
+
+- `baseline_ref` must identify the governing scope anchor for a task, not any supporting reference
+- `acceptance` / `acceptance_checklist` must identify executable completion checks, not commentary or aspirational goals
+- `evidence` must identify required proof inputs or structured proof records, not general narrative context
+- `blocker` must identify structured open blockers; only unresolved blockers that participate in validation should affect gating outcomes
+
+### Role boundary rule
+
+- author-owned inputs are supplied, maintained, or resolved by task operators
+- system-evaluated signals are computed, summarized, or refreshed by the system from those inputs and the active rule contract
+
+### Consumption rule
+
+- schema, validator, endpoint, guard, dashboard, settings, and verifier layers should share the same terminology skeleton
+- if any layer needs a private alias, private checklist term, or private explanation bridge, the baseline or contract should be tightened before implementation proceeds
 
 ## Dependency logic across first-batch tasks
 
