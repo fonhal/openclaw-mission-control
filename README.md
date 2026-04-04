@@ -159,6 +159,26 @@ Environment templates:
 
 Complete guides for deployment, production, troubleshooting, and testing are in [`/docs`](./docs/).
 
+For the new Mission Control documentation structure, start with:
+
+- [`docs/guide/overview.md`](./docs/guide/overview.md)
+- [`docs/product/mission.md`](./docs/product/mission.md)
+- [`docs/product/information-architecture.md`](./docs/product/information-architecture.md)
+- [`docs/product/page-map.md`](./docs/product/page-map.md)
+- [`docs/architecture/system-overview.md`](./docs/architecture/system-overview.md)
+- [`docs/architecture/runtime-integration.md`](./docs/architecture/runtime-integration.md)
+- [`docs/architecture/event-flow.md`](./docs/architecture/event-flow.md)
+- [`docs/architecture/state-lifecycle.md`](./docs/architecture/state-lifecycle.md)
+- [`docs/reference/commands-and-actions.md`](./docs/reference/commands-and-actions.md)
+- [`docs/reference/data-models.md`](./docs/reference/data-models.md)
+- [`docs/contracts/ui-action-contract.md`](./docs/contracts/ui-action-contract.md)
+- [`docs/contracts/session-state-contract.md`](./docs/contracts/session-state-contract.md)
+- [`docs/contracts/task-state-contract.md`](./docs/contracts/task-state-contract.md)
+- [`docs/contracts/notification-contract.md`](./docs/contracts/notification-contract.md)
+- [`docs/operations/release-checklist.md`](./docs/operations/release-checklist.md)
+- [`docs/operations/smoke-test.md`](./docs/operations/smoke-test.md)
+- [`docs/prompts/ui-writing-style.md`](./docs/prompts/ui-writing-style.md)
+
 ## Project status
 
 Mission Control is under active development.
