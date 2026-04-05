@@ -66,6 +66,12 @@ These documents define the current expansion direction for evolving Mission Cont
 - [Authentication](./reference/authentication.md)
 - [API notes](./reference/api.md)
 
+## 文档语言约定
+
+- 本项目文档、说明、总结、协作输出默认使用中文。
+- 如必须保留英文原文，应补充中文解释，避免仅使用英文造成理解分叉。
+- 代码、接口、配置、协议字段等机器相关标识可保留英文，但面向人的说明应优先中文。
+
 ## Contributing to docs
 
 - [Docs style guide](./style-guide.md)
