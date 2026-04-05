@@ -52,7 +52,9 @@ type LocalAuthLoginProps = {
   onAuthenticated?: () => void;
 };
 
-const defaultOnAuthenticated = () => window.location.reload();
+const defaultOnAuthenticated = () => {
+  window.location.assign(window.location.pathname + window.location.search);
+};
 
 export function LocalAuthLogin({ onAuthenticated }: LocalAuthLoginProps) {
   const [token, setToken] = useState("");
