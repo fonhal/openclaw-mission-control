@@ -9,37 +9,60 @@ export function isLocalAuthMode(): boolean {
   return process.env.NEXT_PUBLIC_AUTH_MODE === AuthMode.Local;
 }
 
-export function setLocalAuthToken(token: string): void {
-  localToken = token;
-  if (typeof window === "undefined") return;
+function readStoredToken(storage: Storage): string | null {
   try {
-    window.sessionStorage.setItem(STORAGE_KEY, token);
+    return storage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredToken(storage: Storage, token: string): void {
+  try {
+    storage.setItem(STORAGE_KEY, token);
   } catch {
     // Ignore storage failures (private mode / policy).
   }
 }
 
-export function getLocalAuthToken(): string | null {
-  if (localToken) return localToken;
-  if (typeof window === "undefined") return null;
+function clearStoredToken(storage: Storage): void {
   try {
-    const stored = window.sessionStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      localToken = stored;
-      return stored;
-    }
+    storage.removeItem(STORAGE_KEY);
   } catch {
     // Ignore storage failures (private mode / policy).
   }
+}
+
+export function setLocalAuthToken(token: string): void {
+  localToken = token;
+  if (typeof window === "undefined") return;
+  writeStoredToken(window.sessionStorage, token);
+  writeStoredToken(window.localStorage, token);
+}
+
+export function getLocalAuthToken(): string | null {
+  if (localToken) return localToken;
+  if (typeof window === "undefined") return null;
+
+  const sessionToken = readStoredToken(window.sessionStorage);
+  if (sessionToken) {
+    localToken = sessionToken;
+    return sessionToken;
+  }
+
+  const persistedToken = readStoredToken(window.localStorage);
+  if (persistedToken) {
+    localToken = persistedToken;
+    writeStoredToken(window.sessionStorage, persistedToken);
+    return persistedToken;
+  }
+
   return null;
 }
 
 export function clearLocalAuthToken(): void {
   localToken = null;
   if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore storage failures (private mode / policy).
-  }
+  clearStoredToken(window.sessionStorage);
+  clearStoredToken(window.localStorage);
 }

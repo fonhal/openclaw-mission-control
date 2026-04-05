@@ -47,7 +47,10 @@ describe("LocalAuthLogin", () => {
     const user = userEvent.setup();
     render(<LocalAuthLogin />);
 
-    await user.type(screen.getByPlaceholderText("Paste token"), "x".repeat(49));
+    await user.type(
+      screen.getByPlaceholderText("Paste token or Bearer token"),
+      "x".repeat(49),
+    );
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     expect(
@@ -63,7 +66,10 @@ describe("LocalAuthLogin", () => {
     const user = userEvent.setup();
     render(<LocalAuthLogin onAuthenticated={onAuthenticatedMock} />);
 
-    await user.type(screen.getByPlaceholderText("Paste token"), "x".repeat(50));
+    await user.type(
+      screen.getByPlaceholderText("Paste token or Bearer token"),
+      "x".repeat(50),
+    );
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() =>
@@ -131,7 +137,10 @@ describe("LocalAuthLogin", () => {
     const user = userEvent.setup();
     render(<LocalAuthLogin onAuthenticated={onAuthenticatedMock} />);
 
-    await user.type(screen.getByPlaceholderText("Paste token"), "t".repeat(50));
+    await user.type(
+      screen.getByPlaceholderText("Paste token or Bearer token"),
+      "t".repeat(50),
+    );
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     await waitFor(() =>
@@ -141,5 +150,15 @@ describe("LocalAuthLogin", () => {
     );
     expect(setLocalAuthTokenMock).not.toHaveBeenCalled();
     expect(onAuthenticatedMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the device persistence guidance", () => {
+    render(<LocalAuthLogin />);
+
+    expect(
+      screen.getByText(
+        "After validation, Mission Control keeps the token on this device so new tabs stay signed in until you sign out.",
+      ),
+    ).toBeInTheDocument();
   });
 });

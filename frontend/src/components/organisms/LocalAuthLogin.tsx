@@ -110,6 +110,9 @@ export function LocalAuthLogin({ onAuthenticated }: LocalAuthLoginProps) {
             <p className="text-sm text-muted">
               Enter your access token to unlock Mission Control. You can paste either the raw token or a full Bearer token.
             </p>
+            <p className="text-xs text-muted">
+              After validation, Mission Control keeps the token on this device so new tabs stay signed in until you sign out.
+            </p>
           </div>
         </CardHeader>
         <CardContent className="pt-5">
