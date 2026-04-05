@@ -5,15 +5,15 @@ import os
 
 import requests
 
+from _mc_token import resolve_mc_token
+
 BASE_URL = os.environ.get('MC_BASE_URL', 'http://localhost:8000').rstrip('/')
-TOKEN = os.environ.get('MC_TOKEN')
 
 
 def headers():
-    if not TOKEN:
-        raise SystemExit('MC_TOKEN is required')
+    token = resolve_mc_token()
     return {
-        'Authorization': TOKEN if TOKEN.startswith('Bearer ') else f'Bearer {TOKEN}',
+        'Authorization': token,
         'Content-Type': 'application/json',
     }
 

@@ -7,8 +7,9 @@ from pathlib import Path
 
 import requests
 
+from _mc_token import resolve_mc_token
+
 BASE_URL = os.environ.get('MC_BASE_URL', 'http://localhost:8000').rstrip('/')
-TOKEN = os.environ.get('MC_TOKEN')
 BOARD_ID = '4201eeb0-4a3c-429b-ad56-88cdf7367b3a'
 TASK_CARDS = Path('/Users/vonpeter/codespace/agent-workspace/workspace-robot02/projects/openclaw-mission-control-iteration/docs/task-cards.md')
 
@@ -62,10 +63,8 @@ ROLE_TO_AGENT = {
 
 
 def headers():
-    if not TOKEN:
-        raise SystemExit('MC_TOKEN is required')
     return {
-        'Authorization': TOKEN if TOKEN.startswith('Bearer ') else f'Bearer {TOKEN}',
+        'Authorization': resolve_mc_token(),
         'Content-Type': 'application/json',
     }
 

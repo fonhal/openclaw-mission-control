@@ -5,8 +5,9 @@ from textwrap import dedent
 
 import requests
 
+from _mc_token import resolve_mc_token
+
 BASE_URL = os.environ.get('MC_BASE_URL', 'http://localhost:8000').rstrip('/')
-TOKEN = os.environ.get('MC_TOKEN')
 BOARD_ID = '4201eeb0-4a3c-429b-ad56-88cdf7367b3a'
 
 TASKS = {
@@ -527,9 +528,7 @@ TASKS = {
 
 
 def headers():
-    if not TOKEN:
-        raise SystemExit('MC_TOKEN is required')
-    return {'Authorization': TOKEN if TOKEN.startswith('Bearer ') else f'Bearer {TOKEN}', 'Content-Type': 'application/json'}
+    return {'Authorization': resolve_mc_token(), 'Content-Type': 'application/json'}
 
 
 def ensure_task_type_field(session):
