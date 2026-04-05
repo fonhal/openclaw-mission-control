@@ -161,6 +161,7 @@ Complete guides for deployment, production, troubleshooting, and testing are in 
 
 For Mission Control API-first operations, see:
 - [`docs/operations/mission-control-api-usage-plan.md`](./docs/operations/mission-control-api-usage-plan.md)
+- [`docs/operations/agent-startup-checklist.md`](./docs/operations/agent-startup-checklist.md)
 - [`scripts/mcctl.py`](./scripts/mcctl.py)
 
 For the new Mission Control documentation structure, start with:
