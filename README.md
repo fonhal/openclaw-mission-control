@@ -159,6 +159,10 @@ Environment templates:
 
 Complete guides for deployment, production, troubleshooting, and testing are in [`/docs`](./docs/).
 
+For Mission Control API-first operations, see:
+- [`docs/operations/mission-control-api-usage-plan.md`](./docs/operations/mission-control-api-usage-plan.md)
+- [`scripts/mcctl.py`](./scripts/mcctl.py)
+
 For the new Mission Control documentation structure, start with:
 
 - [`docs/guide/overview.md`](./docs/guide/overview.md)
